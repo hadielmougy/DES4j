@@ -1,6 +1,7 @@
 package io.github.des4j.des4j;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.PriorityQueue;
 
@@ -26,13 +27,20 @@ class Simulation {
         }
     }
 
-    public void processEntity(Entity entity, String resourceName) {
-        Resource resource = resources.get(resourceName);
+    public void processEntity(Entity entity, List<String> resourceNames) {
+        if (resourceNames.isEmpty()) return; // No more resources to process
+
+        String currentResourceName = resourceNames.get(0);
+        Resource resource = resources.get(currentResourceName);
 
         Runnable action = () -> {
             if (resource.allocate(entity)) {
                 System.out.println(globalClock + ": " + entity.name + " started using " + resource.name);
-                scheduleEvent(globalClock + entity.interval, entity, () -> releaseResource(entity, resourceName));
+                scheduleEvent(globalClock + entity.interval, entity, () -> {
+                    releaseResource(entity, currentResourceName);
+                    // Move to the next resource in the list
+                    processEntity(entity, resourceNames.subList(1, resourceNames.size()));
+                });
             } else {
                 System.out.println(globalClock + ": " + entity.name + " queued for " + resource.name);
             }
