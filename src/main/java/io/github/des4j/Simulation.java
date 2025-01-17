@@ -28,7 +28,7 @@ class Simulation {
     }
 
     public void processEntity(Entity entity, List<String> resourceNames) {
-        if (resourceNames.isEmpty()) return; // No more resources to process
+        if (resourceNames.isEmpty()) return;
 
         String currentResourceName = resourceNames.get(0);
         Resource resource = resources.get(currentResourceName);
@@ -37,8 +37,7 @@ class Simulation {
             if (resource.allocate(entity)) {
                 System.out.println(globalClock + ": " + entity.name + " started using " + resource.name);
                 scheduleEvent(globalClock + entity.interval, entity, () -> {
-                    releaseResource(entity, currentResourceName);
-                    // Move to the next resource in the list
+                    releaseResource(currentResourceName);
                     processEntity(entity, resourceNames.subList(1, resourceNames.size()));
                 });
             } else {
@@ -49,7 +48,7 @@ class Simulation {
         scheduleEvent(globalClock, entity, action);
     }
 
-    public void releaseResource(Entity entity, String resourceName) {
+    public void releaseResource(String resourceName) {
         Resource resource = resources.get(resourceName);
         Entity releasedEntity = resource.release();
         if (releasedEntity != null) {
