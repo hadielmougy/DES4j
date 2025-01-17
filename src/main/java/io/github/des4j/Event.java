@@ -1,4 +1,4 @@
-package io.github.des4j.des4j;
+package io.github.des4j;
 
 class Event implements Comparable<Event> {
     int time;

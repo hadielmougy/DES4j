@@ -1,4 +1,4 @@
-package io.github.des4j.des4j;
+package io.github.des4j;
 
 
 import java.util.Arrays;
@@ -17,7 +17,6 @@ public class Des4jApplication {
         Entity entity2 = new Entity("Entity2", 7);
         Entity entity3 = new Entity("Entity3", 4);
 
-        // Define the sequence of resources for each entity
         sim.processEntity(entity1, Arrays.asList("Resource1", "Resource2"));
         sim.processEntity(entity2, Arrays.asList("Resource1", "Resource2"));
         sim.processEntity(entity3, Arrays.asList("Resource2", "Resource1"));

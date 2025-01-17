@@ -1,4 +1,4 @@
-package io.github.des4j.des4j;
+package io.github.des4j;
 
 import java.util.HashMap;
 import java.util.List;
