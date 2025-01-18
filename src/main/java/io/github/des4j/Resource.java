@@ -1,20 +1,19 @@
 package io.github.des4j;
 
 
-import java.util.ArrayList;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Queue;
+import java.util.*;
 
-class Resource {
-    String name;
-    int capacity;
-    Queue<Entity> queue = new LinkedList<>();
-    List<Entity> activeEntities = new ArrayList<>();
+public class Resource {
+    public final String name;
+    public final int capacity;
+    private final List<Entity> activeEntities = new ArrayList<>();
+    private final Queue<Runnable> waiting = new LinkedList<>();
+    private final TimeRange timeRange;
 
-    public Resource(String name, int capacity) {
-        this.name = name;
-        this.capacity = capacity;
+    public Resource(String name, int capacity, TimeRange timeRange) {
+        this.name       = Objects.requireNonNull(name);
+        this.capacity   = Util.validateIsPositive(capacity);
+        this.timeRange  = Objects.requireNonNull(timeRange);
     }
 
     public boolean allocate(Entity entity) {
@@ -22,20 +21,32 @@ class Resource {
             activeEntities.add(entity);
             return true;
         } else {
-            queue.add(entity);
             return false;
         }
     }
 
     public Entity release() {
         if (!activeEntities.isEmpty()) {
-            Entity releasedEntity = activeEntities.remove(0);
-            if (!queue.isEmpty()) {
-                Entity nextEntity = queue.poll();
-                activeEntities.add(nextEntity);
+            Entity entity = activeEntities.remove(0);
+            if (!waiting.isEmpty()) {
+                waiting.poll().run();
             }
-            return releasedEntity;
+            return entity;
         }
         return null;
+    }
+
+    public void notifyCapacity(Runnable runnable) {
+        waiting.offer(runnable);
+    }
+
+    public int processingTime() {
+        int start = timeRange.start;
+        int end = timeRange.end;
+
+        if (start == end) {
+            return start;
+        }
+        return end + (int) (Math.random() * ((end - start) + 1));
     }
 }

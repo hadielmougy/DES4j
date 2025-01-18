@@ -1,20 +1,17 @@
 package io.github.des4j;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.PriorityQueue;
+import java.util.*;
 
-class Simulation {
-    int globalClock = 0;
-    PriorityQueue<Event> eventQueue = new PriorityQueue<>();
-    Map<String, Resource> resources = new HashMap<>();
+public class Simulation {
+    private final PriorityQueue<Event> eventQueue = new PriorityQueue<>();
+    private final Map<String, Resource> resources = new HashMap<>();
+    private int globalClock = 0;
 
     public void addResource(Resource resource) {
-        resources.put(resource.name, resource);
+        resources.put(resource.name, Objects.requireNonNull(resource));
     }
 
-    public void scheduleEvent(int time, Entity entity, Runnable action) {
+    private void scheduleEvent(int time, Entity entity, Runnable action) {
         Event event = new Event(time, entity, action);
         eventQueue.add(event);
     }
@@ -28,7 +25,9 @@ class Simulation {
     }
 
     public void processEntity(Entity entity, List<String> resourceNames) {
-        if (resourceNames.isEmpty()) return;
+        if (resourceNames.isEmpty()) {
+            return;
+        }
 
         String currentResourceName = resourceNames.get(0);
         Resource resource = resources.get(currentResourceName);
@@ -36,19 +35,24 @@ class Simulation {
         Runnable action = () -> {
             if (resource.allocate(entity)) {
                 System.out.println(globalClock + ": " + entity.name + " started using " + resource.name);
-                scheduleEvent(globalClock + entity.interval, entity, () -> {
+                scheduleEvent(calculateTime(entity, resource), entity, () -> {
                     releaseResource(currentResourceName);
                     processEntity(entity, resourceNames.subList(1, resourceNames.size()));
                 });
             } else {
                 System.out.println(globalClock + ": " + entity.name + " queued for " + resource.name);
+                resource.notifyCapacity(() -> scheduleEvent(globalClock, entity, () -> processEntity(entity, resourceNames)));
             }
         };
 
         scheduleEvent(globalClock, entity, action);
     }
 
-    public void releaseResource(String resourceName) {
+    private int calculateTime(Entity entity, Resource resource) {
+        return globalClock + entity.delay + resource.processingTime();
+    }
+
+    private void releaseResource(String resourceName) {
         Resource resource = resources.get(resourceName);
         Entity releasedEntity = resource.release();
         if (releasedEntity != null) {
